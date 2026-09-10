@@ -35,7 +35,10 @@ os.makedirs(app.instance_path, exist_ok=True)
 if os.environ.get("DATABASE_URL"):
     app.config["SQLALCHEMY_DATABASE_URI"] = _database_uri()
 else:
-    db_file = Path(app.instance_path) / "whattoorder.db"
+    if os.environ.get("RENDER"):
+        db_file = Path("/tmp/whattoorder.db")
+    else:
+        db_file = Path(app.instance_path) / "whattoorder.db"
     posix = str(db_file.resolve()).replace("\\", "/")
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + posix
 
@@ -50,8 +53,12 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 
-with app.app_context():
-    db.create_all()
+try:
+    with app.app_context():
+        db.create_all()
+except Exception:
+    app.logger.exception("Could not create the login database tables")
+    raise
 
 
 def _filters():
