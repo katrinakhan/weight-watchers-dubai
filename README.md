@@ -1,6 +1,6 @@
 # Weight Watchers — What to Order · Dubai
 
-Restaurant order guide for eating out in Dubai while watching your weight. Clients log in with email and password first.
+Browse Dubai restaurants for free. **What to order** (plates, calories, drinks) is AED 30 for 3 months via Stripe.
 
 ```bash
 cd "C:\Users\Nageen\Desktop\Nutrition cv\dubai-eat-out"
@@ -10,4 +10,4 @@ python app.py
 
 Open http://127.0.0.1:5055/
 
-On Render, set **Start Command** to `python start.py`. Set `SECRET_KEY`. Add PostgreSQL and `DATABASE_URL` if you want client accounts to survive restarts.
+On Render, **Start Command** is `python3 start.py`. Set `SECRET_KEY` and `STRIPE_SECRET_KEY` (Stripe Dashboard → Developers → API keys, secret key).

@@ -17,9 +17,12 @@
             <span class="brand-name">What to Order · Dubai</span>
         </a>
         <nav>
-            {% if current_user.is_authenticated %}
             <a href="{{ url_for('how') }}">How this works</a>
+            {% if has_access %}
             <a href="{{ url_for('logout') }}">Log out</a>
+            {% else %}
+            <a href="{{ url_for('subscribe') }}">Subscribe</a>
+            <a href="{{ url_for('login') }}">Log in</a>
             {% endif %}
         </nav>
     </header>

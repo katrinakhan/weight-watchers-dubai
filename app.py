@@ -1,14 +1,10 @@
 import os
 from pathlib import Path
 
-from flask import Flask, redirect, render_template, request, url_for
-from flask_login import (
-    LoginManager,
-    current_user,
-    login_required,
-    login_user,
-    logout_user,
-)
+import stripe
+from flask import Flask, redirect, render_template, request, session, url_for
+from flask_login import LoginManager, current_user, login_user, logout_user
+from sqlalchemy import text
 
 from models import User, db
 from restaurants import (
@@ -19,6 +15,9 @@ from restaurants import (
     get_restaurant,
     search_restaurants,
 )
+
+PLAN_AED = 30
+PLAN_DAYS = 90
 
 
 def _database_uri() -> str:
@@ -45,7 +44,7 @@ else:
 db.init_app(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
-login_manager.login_message = "Log in to open Weight Watchers — What to Order · Dubai."
+login_manager.login_message = "Create a password after you subscribe, then log in."
 
 
 @login_manager.user_loader
@@ -53,12 +52,31 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 
+def _ensure_paid_until_column():
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(text('ALTER TABLE "user" ADD COLUMN paid_until DATETIME'))
+            conn.commit()
+    except Exception:
+        pass
+
+
 try:
     with app.app_context():
         db.create_all()
+        _ensure_paid_until_column()
 except Exception:
     app.logger.exception("Could not create the login database tables")
     raise
+
+
+def _has_access() -> bool:
+    return current_user.is_authenticated and current_user.has_access()
+
+
+@app.context_processor
+def inject_access():
+    return {"has_access": _has_access(), "plan_aed": PLAN_AED, "plan_days": PLAN_DAYS}
 
 
 def _filters():
@@ -70,6 +88,15 @@ def _filters():
     if price not in ("all", "mid", "high"):
         price = "all"
     return cuisine, restaurant_q, price
+
+
+def _grant_by_email(email: str) -> User | None:
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        return None
+    user.grant_three_months()
+    db.session.commit()
+    return user
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -96,6 +123,7 @@ def login():
 def register():
     if current_user.is_authenticated:
         return redirect(url_for("index"))
+    paid_email = (session.get("paid_email") or "").lower()
     error = None
     if request.method == "POST":
         email = (request.form.get("email") or "").strip().lower()
@@ -112,22 +140,24 @@ def register():
         else:
             user = User(email=email)
             user.set_password(password)
+            if paid_email and email == paid_email:
+                user.grant_three_months()
+                session.pop("paid_email", None)
             db.session.add(user)
             db.session.commit()
             login_user(user)
             return redirect(url_for("index"))
-    return render_template("register.html", error=error)
+    return render_template("register.html", error=error, paid_email=paid_email)
 
 
 @app.route("/logout")
-@login_required
 def logout():
-    logout_user()
-    return redirect(url_for("login"))
+    if current_user.is_authenticated:
+        logout_user()
+    return redirect(url_for("index"))
 
 
 @app.route("/")
-@login_required
 def index():
     cuisine, restaurant_q, price = _filters()
     results = search_restaurants(cuisine, restaurant_q, price)
@@ -147,8 +177,9 @@ def index():
 
 
 @app.route("/restaurant/<slug>")
-@login_required
 def restaurant(slug):
+    if not _has_access():
+        return redirect(url_for("subscribe"))
     row = get_restaurant(slug)
     if row is None:
         return render_template("not_found.html"), 404
@@ -156,9 +187,68 @@ def restaurant(slug):
 
 
 @app.route("/how-this-works")
-@login_required
 def how():
     return render_template("how.html", total=len(all_restaurants()))
+
+
+@app.route("/subscribe")
+def subscribe():
+    if _has_access():
+        return redirect(url_for("index"))
+    return render_template("subscribe.html", error=None)
+
+
+@app.route("/subscribe/checkout", methods=["POST"])
+def subscribe_checkout():
+    secret = os.environ.get("STRIPE_SECRET_KEY")
+    if not secret:
+        return render_template(
+            "subscribe.html",
+            error="Stripe is not connected yet. Add STRIPE_SECRET_KEY in Render Environment.",
+        ), 503
+    stripe.api_key = secret
+    checkout = stripe.checkout.Session.create(
+        mode="payment",
+        currency="aed",
+        line_items=[
+            {
+                "price_data": {
+                    "currency": "aed",
+                    "unit_amount": PLAN_AED * 100,
+                    "product_data": {
+                        "name": "Weight Watchers — What to Order · Dubai",
+                        "description": f"Full access for {PLAN_DAYS} days (about 3 months).",
+                    },
+                },
+                "quantity": 1,
+            }
+        ],
+        success_url=url_for("subscribe_success", _external=True)
+        + "?session_id={CHECKOUT_SESSION_ID}",
+        cancel_url=url_for("subscribe", _external=True),
+    )
+    return redirect(checkout.url, code=303)
+
+
+@app.route("/subscribe/success")
+def subscribe_success():
+    secret = os.environ.get("STRIPE_SECRET_KEY")
+    session_id = request.args.get("session_id") or ""
+    if not secret or not session_id:
+        return redirect(url_for("subscribe"))
+    stripe.api_key = secret
+    checkout = stripe.checkout.Session.retrieve(session_id)
+    if checkout.payment_status != "paid":
+        return redirect(url_for("subscribe"))
+    email = (checkout.customer_details.email or "").strip().lower()
+    if not email:
+        return redirect(url_for("subscribe"))
+    user = _grant_by_email(email)
+    if user is not None:
+        login_user(user)
+        return redirect(url_for("index"))
+    session["paid_email"] = email
+    return redirect(url_for("register"))
 
 
 if __name__ == "__main__":

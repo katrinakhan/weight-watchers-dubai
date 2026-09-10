@@ -4,7 +4,14 @@
 <section class="hero">
     <p class="eyebrow">Dubai · mid-range to high-end</p>
     <h1>First pick the cuisine. Then pick the restaurant.</h1>
-    <p class="lede">Six cuisines, seven restaurants each to start. Real menus where we could open them. The rest are labelled AI first drafts so you can call and lock the dishes. Pictures of the room and the plates. Drinks and how to play it tonight on every page.</p>
+    <p class="lede">Browse the rooms for free. What to order — the plates that watch your weight — is for subscribers.</p>
+    {% if not has_access %}
+    <p class="subscribe-banner">
+        <strong>Subscribe · AED {{ plan_aed }} for 3 months</strong>
+        to get full access: what to order, calories, drinks, and how to play it tonight.
+        <a class="subscribe-cta" href="{{ url_for('subscribe') }}">Subscribe · AED {{ plan_aed }} for 3 months</a>
+    </p>
+    {% endif %}
 </section>
 
 <form class="search-panel" method="get" action="{{ url_for('index') }}" role="search">
@@ -53,7 +60,7 @@
 <ul class="card-list">
     {% for r in restaurants %}
     <li>
-        <a class="card" href="{{ url_for('restaurant', slug=r.slug) }}">
+        <a class="card" href="{% if has_access %}{{ url_for('restaurant', slug=r.slug) }}{% else %}{{ url_for('subscribe') }}{% endif %}">
             <img class="card-photo" src="{{ url_for('static', filename='img/' + r.venue_img) }}" alt="">
             <div class="card-copy">
                 <p class="card-tags">
@@ -63,6 +70,9 @@
                 <h2>{{ r.name }}</h2>
                 <p class="meta">{{ r.area }} · {{ r.cuisine_label }}</p>
                 <p class="typical">{{ r.stars }} · {{ r.typical }}</p>
+                {% if not has_access %}
+                <p class="typical">Subscribe to see what to order</p>
+                {% endif %}
             </div>
         </a>
     </li>
