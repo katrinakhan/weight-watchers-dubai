@@ -10,4 +10,4 @@ python app.py
 
 Open http://127.0.0.1:5055/
 
-On Render, create a web service named **weight-watchers-dubai**. Set `SECRET_KEY`. Add PostgreSQL and `DATABASE_URL` if you want client accounts to survive restarts.
+On Render, set **Start Command** to `python start.py`. Set `SECRET_KEY`. Add PostgreSQL and `DATABASE_URL` if you want client accounts to survive restarts.
