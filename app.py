@@ -16,8 +16,11 @@ from restaurants import (
     search_restaurants,
 )
 
-PLAN_AED = 30
-PLAN_DAYS = 90
+PLANS = {
+    "3m": {"aed": 30, "days": 90, "label": "AED 30 for 3 months"},
+    "6m": {"aed": 50, "days": 180, "label": "AED 50 for 6 months"},
+    "1y": {"aed": 90, "days": 365, "label": "AED 90 for a year"},
+}
 
 
 def _database_uri() -> str:
@@ -76,7 +79,7 @@ def _has_access() -> bool:
 
 @app.context_processor
 def inject_access():
-    return {"has_access": _has_access(), "plan_aed": PLAN_AED, "plan_days": PLAN_DAYS}
+    return {"has_access": _has_access(), "plans": PLANS}
 
 
 def _filters():
@@ -90,11 +93,11 @@ def _filters():
     return cuisine, restaurant_q, price
 
 
-def _grant_by_email(email: str) -> User | None:
+def _grant_by_email(email: str, days: int) -> User | None:
     user = User.query.filter_by(email=email).first()
     if user is None:
         return None
-    user.grant_three_months()
+    user.grant_days(days)
     db.session.commit()
     return user
 
@@ -141,7 +144,7 @@ def register():
             user = User(email=email)
             user.set_password(password)
             if paid_email and email == paid_email:
-                user.grant_three_months()
+                user.grant_days(int(session.pop("paid_days", 90)))
                 session.pop("paid_email", None)
             db.session.add(user)
             db.session.commit()
@@ -206,18 +209,21 @@ def subscribe_checkout():
             "subscribe.html",
             error="Stripe is not connected yet. Add STRIPE_SECRET_KEY in Render Environment.",
         ), 503
+    plan_key = request.form.get("plan") or "3m"
+    plan = PLANS.get(plan_key, PLANS["3m"])
     stripe.api_key = secret
     checkout = stripe.checkout.Session.create(
         mode="payment",
         currency="aed",
+        metadata={"plan": plan_key, "days": str(plan["days"])},
         line_items=[
             {
                 "price_data": {
                     "currency": "aed",
-                    "unit_amount": PLAN_AED * 100,
+                    "unit_amount": plan["aed"] * 100,
                     "product_data": {
-                        "name": "Weight Watchers — What to Order · Dubai",
-                        "description": f"Full access for {PLAN_DAYS} days (about 3 months).",
+                        "name": "Weight Watchers — subscribe to see what to order",
+                        "description": plan["label"],
                     },
                 },
                 "quantity": 1,
@@ -243,11 +249,15 @@ def subscribe_success():
     email = (checkout.customer_details.email or "").strip().lower()
     if not email:
         return redirect(url_for("subscribe"))
-    user = _grant_by_email(email)
+    days = 90
+    if checkout.metadata:
+        days = int(checkout.metadata.get("days") or 90)
+    user = _grant_by_email(email, days)
     if user is not None:
         login_user(user)
         return redirect(url_for("index"))
     session["paid_email"] = email
+    session["paid_days"] = days
     return redirect(url_for("register"))
 
 

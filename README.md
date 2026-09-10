@@ -1,6 +1,6 @@
 # Weight Watchers — What to Order · Dubai
 
-Browse Dubai restaurants for free. **What to order** (plates, calories, drinks) is AED 30 for 3 months via Stripe.
+Browse Dubai restaurants for free. **Weight Watchers, subscribe to see what to order:** AED 30 / 3 months, AED 50 / 6 months, AED 90 / year.
 
 ```bash
 cd "C:\Users\Nageen\Desktop\Nutrition cv\dubai-eat-out"

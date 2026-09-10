@@ -4,12 +4,12 @@
 <section class="hero">
     <p class="eyebrow">Dubai · mid-range to high-end</p>
     <h1>First pick the cuisine. Then pick the restaurant.</h1>
-    <p class="lede">Browse the rooms for free. What to order — the plates that watch your weight — is for subscribers.</p>
+    <p class="lede">Browse the restaurants for free. Weight Watchers, subscribe to see what to order.</p>
     {% if not has_access %}
     <p class="subscribe-banner">
-        <strong>Subscribe · AED {{ plan_aed }} for 3 months</strong>
-        to get full access: what to order, calories, drinks, and how to play it tonight.
-        <a class="subscribe-cta" href="{{ url_for('subscribe') }}">Subscribe · AED {{ plan_aed }} for 3 months</a>
+        <strong>Weight Watchers, subscribe to see what to order</strong>
+        AED 30 for 3 months · AED 50 for 6 months · AED 90 for a year.
+        <a class="subscribe-cta" href="{{ url_for('subscribe') }}">Weight Watchers, subscribe to see what to order</a>
     </p>
     {% endif %}
 </section>
@@ -71,7 +71,7 @@
                 <p class="meta">{{ r.area }} · {{ r.cuisine_label }}</p>
                 <p class="typical">{{ r.stars }} · {{ r.typical }}</p>
                 {% if not has_access %}
-                <p class="typical">Subscribe to see what to order</p>
+                <p class="typical">Weight Watchers, subscribe to see what to order</p>
                 {% endif %}
             </div>
         </a>

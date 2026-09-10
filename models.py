@@ -24,5 +24,8 @@ class User(UserMixin, db.Model):
             return False
         return self.paid_until > datetime.now(timezone.utc).replace(tzinfo=None)
 
-    def grant_three_months(self) -> None:
-        self.paid_until = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=90)
+    def grant_days(self, days: int) -> None:
+        start = datetime.now(timezone.utc).replace(tzinfo=None)
+        if self.paid_until and self.paid_until > start:
+            start = self.paid_until
+        self.paid_until = start + timedelta(days=days)

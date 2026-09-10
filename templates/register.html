@@ -3,7 +3,7 @@
 {% block content %}
 <article class="auth">
     <h1>Create an account</h1>
-    <p class="lede">{% if paid_email %}Payment received. Create a password for <strong>{{ paid_email }}</strong> so you can log in for the next 3 months.{% else %}Use your email and a password of at least 8 characters. Subscribe first if you want the order guides.{% endif %}</p>
+    <p class="lede">{% if paid_email %}Payment received. Create a password for <strong>{{ paid_email }}</strong> so you can log in for your plan.{% else %}Use your email and a password of at least 8 characters. Subscribe first if you want the order guides.{% endif %}</p>
     {% if error %}
     <p class="auth-error">{{ error }}</p>
     {% endif %}
