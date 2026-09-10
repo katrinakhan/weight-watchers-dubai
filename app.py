@@ -9,7 +9,6 @@ from flask_login import (
     login_user,
     logout_user,
 )
-from sqlalchemy.engine.url import URL
 
 from models import User, db
 from restaurants import (
@@ -37,10 +36,8 @@ if os.environ.get("DATABASE_URL"):
     app.config["SQLALCHEMY_DATABASE_URI"] = _database_uri()
 else:
     db_file = Path(app.instance_path) / "whattoorder.db"
-    app.config["SQLALCHEMY_DATABASE_URI"] = URL.create(
-        drivername="sqlite",
-        database=str(db_file.resolve()),
-    )
+    posix = str(db_file.resolve()).replace("\\", "/")
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + posix
 
 db.init_app(app)
 login_manager = LoginManager(app)
