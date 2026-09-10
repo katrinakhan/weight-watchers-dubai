@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import os
 
 from flask_login import UserMixin
 from flask_sqlalchemy import SQLAlchemy
@@ -12,6 +13,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     paid_until = db.Column(db.DateTime, nullable=True)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
     def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
@@ -20,6 +22,11 @@ class User(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def has_access(self) -> bool:
+        if self.is_admin:
+            return True
+        admin_email = (os.environ.get("ADMIN_EMAIL") or "").strip().lower()
+        if admin_email and self.email == admin_email:
+            return True
         if self.paid_until is None:
             return False
         return self.paid_until > datetime.now(timezone.utc).replace(tzinfo=None)

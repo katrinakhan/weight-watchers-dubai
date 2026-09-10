@@ -56,18 +56,40 @@ def load_user(user_id):
 
 
 def _ensure_paid_until_column():
-    try:
-        with db.engine.connect() as conn:
-            conn.execute(text('ALTER TABLE "user" ADD COLUMN paid_until DATETIME'))
-            conn.commit()
-    except Exception:
-        pass
+    for stmt in (
+        'ALTER TABLE "user" ADD COLUMN paid_until DATETIME',
+        'ALTER TABLE "user" ADD COLUMN is_admin BOOLEAN DEFAULT 0',
+    ):
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(text(stmt))
+                conn.commit()
+        except Exception:
+            pass
+
+
+def _ensure_admin_user():
+    email = (os.environ.get("ADMIN_EMAIL") or "").strip().lower()
+    password = os.environ.get("ADMIN_PASSWORD") or ""
+    if not email or "@" not in email:
+        return
+    user = User.query.filter_by(email=email).first()
+    if user is None:
+        if len(password) < 8:
+            return
+        user = User(email=email, is_admin=True)
+        user.set_password(password)
+        db.session.add(user)
+    else:
+        user.is_admin = True
+    db.session.commit()
 
 
 try:
     with app.app_context():
         db.create_all()
         _ensure_paid_until_column()
+        _ensure_admin_user()
 except Exception:
     app.logger.exception("Could not create the login database tables")
     raise

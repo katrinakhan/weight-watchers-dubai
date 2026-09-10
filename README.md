@@ -10,4 +10,9 @@ python app.py
 
 Open http://127.0.0.1:5055/
 
-On Render, **Start Command** is `python3 start.py`. Set `SECRET_KEY` and `STRIPE_SECRET_KEY` (Stripe Dashboard → Developers → API keys, secret key).
+On Render, **Start Command** is `python3 start.py`. Environment:
+- `SECRET_KEY`
+- `STRIPE_SECRET_KEY` (Stripe secret key)
+- `ADMIN_EMAIL` (your email — full access, no payment)
+- `ADMIN_PASSWORD` (at least 8 characters — this is how you log in as admin)
+
