@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}{{ r.name }} — What to Order{% endblock %}
+{% block content %}
+<p class="place-toolbar">
+    <a class="home-btn" href="{{ url_for('index') }}">Back to restaurants</a>
+</p>
+
+<article class="place">
+    <img class="venue-hero" src="{{ url_for('static', filename='img/' + r.venue_img) }}" alt="">
+    <p class="photo-note">{{ r.venue_caption }}</p>
+    <header class="place-head">
+        <span class="pill pill-{{ r.price }}">{{ r.price_label }}</span>
+        <h1>{{ r.name }}</h1>
+        <p class="meta">{{ r.area }} · {{ r.cuisine_label }} · {{ r.typical }}</p>
+        <p class="stars">{{ r.stars }}</p>
+        {% if r.draft %}
+        <p class="kcal-banner">AI first draft of this kitchen — confirm the live menu when you call. Then we can lock the dishes.</p>
+        {% endif %}
+        <p class="why">{{ r.why }}</p>
+        {% if r.meal %}
+        <p class="kcal-banner">These plates, about <strong>{{ r.meal.kcal_total }} kcal</strong> together <span>(estimates · this restaurant’s named dishes)</span></p>
+        {% endif %}
+    </header>
+
+    {% if r.meal %}
+    <ol class="courses">
+        {% for d in r.meal.plates %}
+        <li class="course">
+            <img src="{{ url_for('static', filename='img/' + d.img) }}" alt="{{ d.name }}">
+            <div class="course-copy">
+                <p class="course-label">{{ d.label }} · ~{{ d.kcal }} kcal</p>
+                <h2>{{ d.name }}</h2>
+                <p>{{ d.note }}</p>
+            </div>
+        </li>
+        {% endfor %}
+    </ol>
+    {% if r.menu_url %}
+    <p class="photo-note"><strong>Source:</strong> {{ r.menu_source }} <a href="{{ r.menu_url }}" rel="noopener" target="_blank">Open the published menu</a>. Photos are a typical look of that dish, not this restaurant’s own photography. Menus change.</p>
+    {% else %}
+    <p class="photo-note">{{ r.menu_source }} Photos are typical plates, not official menu shots. Menus change.</p>
+    {% endif %}
+    {% else %}
+    <section class="panel how">
+        <h2>No invented menu</h2>
+        <p>We have not got this restaurant’s current published à la carte, so we are not guessing dumplings, soup, and fish. When we can read their menu, the plates will be named as they print them.</p>
+    </section>
+    {% endif %}
+
+    <section class="panel skip">
+        <h2>Skip or share</h2>
+        <ul>
+            {% for item in r.skip %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section class="panel drinks">
+        <h2>Drinks</h2>
+        <p>{{ r.drinks }}</p>
+    </section>
+
+    <section class="panel how">
+        <h2>How to play it tonight</h2>
+        <p>{{ r.how }}</p>
+        {% if r.meal %}
+        <p class="how-plates">
+            {% for d in r.meal.plates %}{{ d.name }} (~{{ d.kcal }} kcal){% if not loop.last %} + {% endif %}{% endfor %}
+        </p>
+        <p class="how-total">Complete total for these three: about <strong>{{ r.meal.kcal_total }} kcal</strong> <span>(estimates)</span></p>
+        {% endif %}
+    </section>
+</article>
+{% endblock %}

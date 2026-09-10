@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Create account — What to Order{% endblock %}
+{% block content %}
+<article class="auth">
+    <h1>Create an account</h1>
+    <p class="lede">Use your email and a password of at least 8 characters. This is for HN Fathima’s clients.</p>
+    {% if error %}
+    <p class="auth-error">{{ error }}</p>
+    {% endif %}
+    <form class="auth-form" method="post" action="{{ url_for('register') }}">
+        <label for="email">Email</label>
+        <input id="email" type="email" name="email" required autocomplete="email">
+        <label for="password">Password</label>
+        <input id="password" type="password" name="password" required minlength="8" autocomplete="new-password">
+        <label for="confirm">Repeat password</label>
+        <input id="confirm" type="password" name="confirm" required minlength="8" autocomplete="new-password">
+        <button type="submit">Create account</button>
+    </form>
+    <p class="auth-switch">Already registered? <a href="{{ url_for('login') }}">Log in</a></p>
+</article>
+{% endblock %}

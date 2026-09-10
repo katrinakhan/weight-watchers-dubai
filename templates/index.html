@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}What to Order — Dubai{% endblock %}
+{% block content %}
+<section class="hero">
+    <p class="eyebrow">Dubai · mid-range to high-end</p>
+    <h1>First pick the cuisine. Then pick the restaurant.</h1>
+    <p class="lede">Six cuisines, seven restaurants each to start. Real menus where we could open them. The rest are labelled AI first drafts so you can call and lock the dishes. Pictures of the room and the plates. Drinks and how to play it tonight on every page.</p>
+</section>
+
+<form class="search-panel" method="get" action="{{ url_for('index') }}" role="search">
+    <div class="search-block">
+        <p class="search-label">1. Search by cuisine</p>
+        <div class="cuisine-grid">
+            {% for c in cuisines %}
+            <a class="cuisine-card{% if cuisine == c.slug %} is-on{% endif %}"
+               href="{{ url_for('index', cuisine=c.slug, price=price, restaurant=restaurant_q) }}">
+                <strong>{{ c.name }}</strong>
+                <span>{{ counts[c.slug] }} restaurants</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% if cuisine != 'all' %}
+        <p class="clear-c"><a href="{{ url_for('index', restaurant=restaurant_q, price=price) }}">Clear cuisine</a></p>
+        {% endif %}
+    </div>
+
+    <div class="search-block">
+        <p class="search-label">2. Search by restaurant</p>
+        <label class="sr-only" for="restaurant">Restaurant name or area</label>
+        <div class="row-search">
+            <input id="restaurant" type="search" name="restaurant" value="{{ restaurant_q }}"
+                   placeholder="Zuma, Karama, Max’s, DIFC…">
+            <input type="hidden" name="cuisine" value="{{ cuisine }}">
+            <button type="submit">Search</button>
+        </div>
+        <fieldset class="price-pills">
+            <legend class="sr-only">Price</legend>
+            <label><input type="radio" name="price" value="all" {% if price == 'all' %}checked{% endif %} onchange="this.form.submit()"> All</label>
+            <label><input type="radio" name="price" value="mid" {% if price == 'mid' %}checked{% endif %} onchange="this.form.submit()"> Mid-range</label>
+            <label><input type="radio" name="price" value="high" {% if price == 'high' %}checked{% endif %} onchange="this.form.submit()"> High-end</label>
+        </fieldset>
+    </div>
+</form>
+
+{% if selected %}
+<p class="count">{{ selected.name }} · {{ shown }} restaurants{% if restaurant_q %} matching “{{ restaurant_q }}”{% endif %}</p>
+<p class="cuisine-blurb">{{ selected.blurb }}</p>
+{% else %}
+<p class="count">{{ shown }} of {{ total }} restaurants{% if restaurant_q %} matching “{{ restaurant_q }}”{% endif %}. Pick a cuisine to narrow the list.</p>
+{% endif %}
+
+{% if restaurants %}
+<ul class="card-list">
+    {% for r in restaurants %}
+    <li>
+        <a class="card" href="{{ url_for('restaurant', slug=r.slug) }}">
+            <img class="card-photo" src="{{ url_for('static', filename='img/' + r.venue_img) }}" alt="">
+            <div class="card-copy">
+                <p class="card-tags">
+                    <span class="pill pill-{{ r.price }}">{{ r.price_label }}</span>
+                    {% if r.draft %}<span class="pill pill-draft">AI draft</span>{% endif %}
+                </p>
+                <h2>{{ r.name }}</h2>
+                <p class="meta">{{ r.area }} · {{ r.cuisine_label }}</p>
+                <p class="typical">{{ r.stars }} · {{ r.typical }}</p>
+            </div>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p class="empty">No match. Choose a cuisine first, then try the restaurant name.</p>
+{% endif %}
+{% endblock %}
