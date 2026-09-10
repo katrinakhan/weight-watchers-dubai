@@ -1,6 +1,6 @@
-# What to Order — Dubai
+# Weight Watchers — What to Order · Dubai
 
-Search Dubai restaurants and see what to order if you are watching your weight. Clients log in with email and password first.
+Restaurant order guide for eating out in Dubai while watching your weight. Clients log in with email and password first.
 
 ```bash
 cd "C:\Users\Nageen\Desktop\Nutrition cv\dubai-eat-out"
@@ -8,6 +8,6 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Open http://127.0.0.1:5055/ — create an account, then the guides open.
+Open http://127.0.0.1:5055/
 
-On Render, set `SECRET_KEY`. Add a PostgreSQL database and `DATABASE_URL` if you want client accounts to survive restarts (SQLite on Render is wiped when the server sleeps).
+On Render, create a web service named **weight-watchers-dubai**. Set `SECRET_KEY`. Add PostgreSQL and `DATABASE_URL` if you want client accounts to survive restarts.

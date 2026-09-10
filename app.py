@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from flask import Flask, redirect, render_template, request, url_for
 from flask_login import (
@@ -8,6 +9,7 @@ from flask_login import (
     login_user,
     logout_user,
 )
+from sqlalchemy.engine.url import URL
 
 from models import User, db
 from restaurants import (
@@ -34,13 +36,16 @@ os.makedirs(app.instance_path, exist_ok=True)
 if os.environ.get("DATABASE_URL"):
     app.config["SQLALCHEMY_DATABASE_URI"] = _database_uri()
 else:
-    db_path = os.path.join(app.instance_path, "whattoorder.db")
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///" + db_path.replace("\\", "/")
+    db_file = Path(app.instance_path) / "whattoorder.db"
+    app.config["SQLALCHEMY_DATABASE_URI"] = URL.create(
+        drivername="sqlite",
+        database=str(db_file.resolve()),
+    )
 
 db.init_app(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
-login_manager.login_message = "Log in with your email to open the restaurant guides."
+login_manager.login_message = "Log in to open Weight Watchers — What to Order · Dubai."
 
 
 @login_manager.user_loader
