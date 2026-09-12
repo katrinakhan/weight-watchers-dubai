@@ -82,6 +82,8 @@ def _ensure_admin_user():
         db.session.add(user)
     else:
         user.is_admin = True
+        if len(password) >= 8:
+            user.set_password(password)
     db.session.commit()
 
 
