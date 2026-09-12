@@ -348,6 +348,15 @@ main {
     line-height: 1.35;
 }
 
+.course-copy .macros {
+    display: block;
+    -webkit-line-clamp: unset;
+    min-height: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    margin: 0.2rem 0 0.35rem;
+}
+
 .photo-note { color: var(--muted); font-size: 0.85rem; }
 
 .cuisine-blurb { color: var(--muted); margin-top: 0; }

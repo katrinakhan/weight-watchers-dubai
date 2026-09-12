@@ -113,8 +113,101 @@ SKIP = {
 }
 
 
-def C(label, name, kcal, note, img):
-    return {"label": label, "name": name, "kcal": kcal, "note": note, "img": img}
+def _macros(name: str, kcal: int):
+    """Coach estimates in grams. Not lab values. Tuned to the named plate."""
+    n = name.lower()
+    # protein, carbs, fat, fiber — then scale lightly toward kcal
+    if any(w in n for w in ("fattoush", "fatoush", "ensalada", "kachumber", "cucumber salad", "arabic salad", "seaweed")):
+        p, c, f, fi = 4, 18, 8, 5
+    elif "spicy cucumber" in n or "lotus" in n:
+        p, c, f, fi = 2, 10, 4, 3
+    elif "edamame" in n:
+        p, c, f, fi = 11, 9, 5, 5
+    elif "kale" in n or "mizuna" in n or "greens" in n or "mallung" in n:
+        p, c, f, fi = 4, 12, 8, 5
+    elif "hummus" in n:
+        p, c, f, fi = 8, 16, 10, 6
+    elif "caesar" in n:
+        p, c, f, fi = 12, 10, 14, 2
+    elif "lentil" in n or "shorba" in n or "dhal" in n or "parippu" in n:
+        p, c, f, fi = 9, 22, 3, 8
+    elif "rasam" in n:
+        p, c, f, fi = 2, 12, 2, 2
+    elif "miso" in n and "cod" not in n and "soup" in n:
+        p, c, f, fi = 3, 4, 1, 1
+    elif "hot & sour" in n or "hot and sour" in n:
+        p, c, f, fi = 6, 10, 3, 2
+    elif "chicken soup" in n or "steamed chicken soup" in n:
+        p, c, f, fi = 14, 6, 5, 1
+    elif "sinigang" in n:
+        p, c, f, fi = 22, 12, 10, 3
+    elif "harees" in n:
+        p, c, f, fi = 12, 36, 8, 4
+    elif any(w in n for w in ("sashimi", "carpaccio", "hamachi", "yellowtail")):
+        p, c, f, fi = 22, 2, 8, 0
+    elif "onsen" in n or "dashi" in n:
+        p, c, f, fi = 10, 3, 10, 0
+    elif "hopper" in n:
+        p, c, f, fi = 6, 28, 5, 2
+    elif "sambol" in n:
+        p, c, f, fi = 2, 6, 7, 3
+    elif "dosa" in n or "idli" in n:
+        p, c, f, fi = 8, 48, 6, 4
+    elif "xiao long bao" in n or "dumpling" in n or "siew mai" in n or "bao" in n:
+        p, c, f, fi = 14, 28, 10, 2
+    elif "lettuce wrap" in n:
+        p, c, f, fi = 18, 18, 12, 3
+    elif "edamame" in n:
+        p, c, f, fi = 11, 9, 5, 5
+    elif any(w in n for w in ("tawook", "tikka", "tandoor", "tandoori", "murgh", "robata chicken")):
+        p, c, f, fi = 38, 6, 14, 1
+    elif "paneer" in n:
+        p, c, f, fi = 18, 8, 18, 1
+    elif "mixed grill" in n or "kebab" in n or "tsukune" in n or "inihaw" in n:
+        p, c, f, fi = 36, 4, 22, 0
+    elif any(w in n for w in ("sea bream", "sea bass", "cod", "salmon", "fish", "bangus", "grilled chicken")):
+        p, c, f, fi = 34, 4, 14, 0
+    elif "black pepper beef" in n or "beef broccoli" in n:
+        p, c, f, fi = 32, 24, 16, 4
+    elif "ginger chicken" in n:
+        p, c, f, fi = 36, 12, 14, 4
+    elif "ramen" in n:
+        p, c, f, fi = 22, 58, 14, 3
+    elif "chicken curry" in n or "fish curry" in n:
+        p, c, f, fi = 28, 10, 18, 3
+    elif "kare-kare" in n:
+        p, c, f, fi = 28, 18, 26, 5
+    elif "koththy" in n or "kottu" in n:
+        p, c, f, fi = 22, 70, 24, 4
+    elif "string hopper" in n:
+        p, c, f, fi = 12, 62, 10, 4
+    elif "duck" in n:
+        p, c, f, fi = 18, 8, 8, 1
+    else:
+        p, c, f, fi = 18, 20, 12, 3
+
+    calc = 4 * p + 4 * c + 9 * f
+    if calc and kcal:
+        scale = kcal / calc
+        # keep fibre from flying off
+        p, c, f = round(p * scale), round(c * scale), round(f * scale)
+        fi = max(0, round(fi * min(scale, 1.3)))
+    return {"protein": p, "carbs": c, "fat": f, "fiber": fi}
+
+
+def C(label, name, kcal, note, img, protein=None, carbs=None, fat=None, fiber=None):
+    m = _macros(name, kcal)
+    return {
+        "label": label,
+        "name": name,
+        "kcal": kcal,
+        "note": note,
+        "img": img,
+        "protein": protein if protein is not None else m["protein"],
+        "carbs": carbs if carbs is not None else m["carbs"],
+        "fat": fat if fat is not None else m["fat"],
+        "fiber": fiber if fiber is not None else m["fiber"],
+    }
 
 
 def R(**kwargs):
@@ -138,11 +231,17 @@ def R(**kwargs):
     kwargs.setdefault("how", HOW[cuisine])
     kwargs.setdefault("skip", SKIP[cuisine])
     courses = kwargs.pop("courses", None)
-    kwargs["meal"] = (
-        {"plates": courses, "kcal_total": sum(p["kcal"] for p in courses)}
-        if courses
-        else None
-    )
+    if courses:
+        kwargs["meal"] = {
+            "plates": courses,
+            "kcal_total": sum(p["kcal"] for p in courses),
+            "protein_total": sum(p["protein"] for p in courses),
+            "carbs_total": sum(p["carbs"] for p in courses),
+            "fat_total": sum(p["fat"] for p in courses),
+            "fiber_total": sum(p["fiber"] for p in courses),
+        }
+    else:
+        kwargs["meal"] = None
     return kwargs
 
 

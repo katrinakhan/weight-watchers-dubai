@@ -18,7 +18,12 @@
         {% endif %}
         <p class="why">{{ r.why }}</p>
         {% if r.meal %}
-        <p class="kcal-banner">These plates, about <strong>{{ r.meal.kcal_total }} kcal</strong> together <span>(estimates · this restaurant’s named dishes)</span></p>
+        <p class="kcal-banner">These plates, about <strong>{{ r.meal.kcal_total }} kcal</strong> together
+            · protein ~{{ r.meal.protein_total }} g
+            · carbs ~{{ r.meal.carbs_total }} g
+            · fat ~{{ r.meal.fat_total }} g
+            · fiber ~{{ r.meal.fiber_total }} g
+            <span>(estimates · this restaurant’s named dishes)</span></p>
         {% endif %}
     </header>
 
@@ -30,6 +35,7 @@
             <div class="course-copy">
                 <p class="course-label">{{ d.label }} · ~{{ d.kcal }} kcal</p>
                 <h2>{{ d.name }}</h2>
+                <p class="macros">Protein ~{{ d.protein }} g · carbs ~{{ d.carbs }} g · fat ~{{ d.fat }} g · fiber ~{{ d.fiber }} g</p>
                 <p>{{ d.note }}</p>
             </div>
         </li>
@@ -68,7 +74,12 @@
         <p class="how-plates">
             {% for d in r.meal.plates %}{{ d.name }} (~{{ d.kcal }} kcal){% if not loop.last %} + {% endif %}{% endfor %}
         </p>
-        <p class="how-total">Complete total for these three: about <strong>{{ r.meal.kcal_total }} kcal</strong> <span>(estimates)</span></p>
+        <p class="how-total">Complete total: about <strong>{{ r.meal.kcal_total }} kcal</strong>
+            · protein ~{{ r.meal.protein_total }} g
+            · carbs ~{{ r.meal.carbs_total }} g
+            · fat ~{{ r.meal.fat_total }} g
+            · fiber ~{{ r.meal.fiber_total }} g
+            <span>(estimates)</span></p>
         {% endif %}
     </section>
 </article>
