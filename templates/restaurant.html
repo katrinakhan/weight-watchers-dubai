@@ -64,7 +64,14 @@
 
     <section class="panel drinks">
         <h2>Drinks</h2>
-        <p>{{ r.drinks }}</p>
+        <div class="drink-pick">
+            <img src="{{ url_for('static', filename='img/' + r.drink_img) }}" alt="{{ r.drink_name }}">
+            <div>
+                <p class="course-label">The one drink</p>
+                <h3>{{ r.drink_name }}</h3>
+                <p>{{ r.drinks }}</p>
+            </div>
+        </div>
     </section>
 
     <section class="panel how">

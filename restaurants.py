@@ -40,6 +40,15 @@ CUISINES = [
 ]
 
 
+DRINK_BEST = {
+    "arabic": ("Arabic qahwa, unsweetened", "drink-qahwa.png"),
+    "chinese": ("Jasmine tea, unsweetened", "drink-jasmine-tea.png"),
+    "japanese": ("Green tea, unsweetened", "drink-green-tea.png"),
+    "indian": ("Still water", "drink-water.png"),
+    "filipino": ("Still water", "drink-water.png"),
+    "sri-lankan": ("Plain tea, unsweetened", "drink-plain-tea.png"),
+}
+
 DRINKS = {
     "arabic": (
         "Arabic qahwa (unsweetened coffee with cardamom) or still water — essentially no calories. "
@@ -228,6 +237,9 @@ def R(**kwargs):
     )
     kwargs.setdefault("draft", False)
     kwargs.setdefault("drinks", DRINKS[cuisine])
+    best = DRINK_BEST[cuisine]
+    kwargs.setdefault("drink_name", best[0])
+    kwargs.setdefault("drink_img", best[1])
     kwargs.setdefault("how", HOW[cuisine])
     kwargs.setdefault("skip", SKIP[cuisine])
     courses = kwargs.pop("courses", None)
@@ -302,6 +314,8 @@ RESTAURANTS = [
         menu_source="Al Fanar Expo/business lunch PDF (lentil soup, Al Fanar salad, grilled sea bream) and published Al Fanar dish lists (grilled seabream, harees, machboos).",
         menu_url="https://www.alfanarrestaurant.com/",
         drinks="Arabic qahwa unsweetened, or water. Skip karak with sugar and dessert drinks. Emirati coffee is the zero-calorie finish.",
+        drink_name="Emirati qahwa, unsweetened",
+        drink_img="drink-qahwa.png",
         how="Al Fanar salad, lentil soup, grilled sea bream. Share rice if it comes. Qahwa instead of luqaimat tonight.",
         courses=[
             C("Salad", "Al Fanar salad", 120, "Named on their Expo/business lunch menu.", "dish-tomato-salad.png"),
@@ -362,6 +376,8 @@ RESTAURANTS = [
         menu_source="The Noodle House Dubai delivery menus (Prawns Siew Mai, Asia Kale salad, Duck Wonton Soup, Black Pepper Beef).",
         menu_url="https://www.soukmadinatjumeirah.ae/en/outlets/the-noodle-house",
         drinks="Green tea or jasmine tea unsweetened if they have it, otherwise still water. Skip lemon iced tea with syrup and fruit coolers.",
+        drink_name="Green tea, unsweetened",
+        drink_img="drink-green-tea.png",
         how="Siew mai, kale salad, black pepper beef. No fried rice. Tea with the meal.",
         courses=[
             C("Starter", "Prawns siew mai", 200, "On their street-bites list. Steamed, not vegetable spring rolls.", "dish-dumplings.png"),
@@ -383,6 +399,8 @@ RESTAURANTS = [
         menu_source="P.F. Chang’s Dubai menu listings (Chang’s Chicken Lettuce Wraps, Edamame, Ginger Chicken with Broccoli).",
         menu_url="https://www.pfchangsme.com/en/dubaimallmenu",
         drinks="Green tea unsweetened or water. Skip mocktails, lychee lemonade, and anything with syrup.",
+        drink_name="Green tea, unsweetened",
+        drink_img="drink-green-tea.png",
         how="Lettuce wraps, edamame, ginger chicken with broccoli. Stop there. Tea, not a dummy cocktail.",
         courses=[
             C("Starter", "Chang's chicken lettuce wraps", 280, "Signature on Dubai P.F. Chang’s lists (~AED 51–53). Use the lettuce, go easy on the crispy rice sticks.", "dish-inihaw.png"),
@@ -412,6 +430,8 @@ RESTAURANTS = [
     R(
         slug="3fils",
         name="3Fils",
+        drink_name="Still water",
+        drink_img="drink-water.png",
         area="Jumeirah Fishing Harbour",
         cuisine_slug="japanese",
         cuisine_label="Japanese-inspired Asian",
@@ -757,6 +777,8 @@ RESTAURANTS = [
         why="AI draft. The leak here is cocktails. Food: sashimi then grill.",
         menu_source="AI draft (sashimi, edamame, robata chicken). Confirm when you call.",
         drinks="Water. The bar is the calorie leak — skip sweet cocktails.",
+        drink_name="Still water",
+        drink_img="drink-water.png",
         how="Eat the grill. Don’t drink the menu.",
         courses=[
             C("Starter", "Sashimi / yellowtail (if listed)", 180, "Draft: raw fish first.", "dish-sashimi.png"),
@@ -884,6 +906,8 @@ RESTAURANTS = [
         why="AI draft. South Indian vegetarian — rasam and a small dosa beat a ghee roast plus sweet lassi.",
         menu_source="AI draft (rasam, cucumber salad, plain dosa or idli). Confirm the branch menu when you call.",
         drinks="Water or unsweetened filter coffee if they will skip extra sugar. Skip sweet lassi.",
+        drink_name="Filter coffee, unsweetened",
+        drink_img="drink-filter-coffee.png",
         how="Rasam, a small dosa or idli sambar. Not ghee roast plus dessert.",
         courses=[
             C("Soup", "Rasam", 80, "Draft: pepper-tamarind soup.", "dish-lentil-soup.png"),
@@ -1033,6 +1057,8 @@ RESTAURANTS = [
         why="AI draft. Rice-and-curry — control the rice.",
         menu_source="AI draft (hopper, dhal, fish curry set). Confirm when you call.",
         drinks="Water.",
+        drink_name="Still water",
+        drink_img="drink-water.png",
         how="Set: fish, dhal, greens, small rice.",
         courses=[
             C("Starter", "Hopper", 160, "Draft.", "dish-hopper.png"),
@@ -1054,6 +1080,8 @@ RESTAURANTS = [
         why="AI draft. Dressier Sri Lankan night — hoppers and fish, not fried short eats.",
         menu_source="AI draft (hopper, dhal, fish). Confirm Marina menu when you call.",
         drinks="Water. Skip sweet iced coffees.",
+        drink_name="Still water",
+        drink_img="drink-water.png",
         how="Hopper, dhal, fish, mallung.",
         courses=[
             C("Starter", "Egg hopper", 180, "Draft.", "dish-hopper.png"),
