@@ -59,7 +59,7 @@
 {% if restaurants %}
 <ul class="card-list">
     {% for r in restaurants %}
-    <li>
+    <li data-name="{{ r.name }}" data-area="{{ r.area }}" data-search="{{ r.search }}">
         <a class="card" href="{% if has_access %}{{ url_for('restaurant', slug=r.slug) }}{% else %}{{ url_for('subscribe') }}{% endif %}">
             <img class="card-photo" src="{{ url_for('static', filename='img/' + r.venue_img) }}" alt="">
             <div class="card-copy">
@@ -81,4 +81,42 @@
 {% else %}
 <p class="empty">No match. Choose a cuisine first, then try the restaurant name.</p>
 {% endif %}
+<script>
+(function () {
+    var input = document.getElementById("restaurant");
+    var list = document.querySelector(".card-list");
+    if (!input || !list) return;
+    var original = Array.prototype.slice.call(list.children);
+    function rank(li, q) {
+        var name = (li.getAttribute("data-name") || "").toLowerCase();
+        var area = (li.getAttribute("data-area") || "").toLowerCase();
+        var search = (li.getAttribute("data-search") || "").toLowerCase();
+        if (!q) return 50;
+        if (name === q) return 0;
+        if (name.indexOf(q) === 0) return 1;
+        var tokens = q.split(/\s+/).filter(Boolean);
+        if (tokens.length && tokens.every(function (t) { return name.indexOf(t) !== -1; })) return 2;
+        if (name.indexOf(q) !== -1) return 3;
+        if (area.indexOf(q) !== -1) return 4;
+        if (search.indexOf(q) !== -1) return 5;
+        return 90;
+    }
+    function reorder() {
+        var q = input.value.trim().toLowerCase();
+        var items = original.slice();
+        items.sort(function (a, b) {
+            return rank(a, q) - rank(b, q);
+        });
+        items.forEach(function (li) { list.appendChild(li); });
+        if (q) {
+            var first = items[0];
+            if (first && rank(first, q) < 90) {
+                first.scrollIntoView({ block: "nearest" });
+            }
+        }
+    }
+    input.addEventListener("input", reorder);
+    if (input.value.trim()) reorder();
+})();
+</script>
 {% endblock %}

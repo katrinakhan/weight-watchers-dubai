@@ -1135,13 +1135,42 @@ def cuisine_counts():
     return counts
 
 
+def _search_rank(row, q: str) -> int:
+    if not q:
+        return 50
+    name = row["name"].lower()
+    area = row["area"].lower()
+    tokens = [t for t in q.split() if t]
+    if name == q:
+        return 0
+    if name.startswith(q):
+        return 1
+    if tokens and all(t in name for t in tokens):
+        return 2
+    if q in name:
+        return 3
+    if q in area or (tokens and all(t in area for t in tokens)):
+        return 4
+    if q in row["search"]:
+        return 5
+    return 99
+
+
 def search_restaurants(cuisine: str, restaurant_q: str, price: str = "all"):
-    rows = list(RESTAURANTS)
+    all_rows = list(RESTAURANTS)
+    rows = all_rows
     if cuisine and cuisine != "all":
         rows = [r for r in rows if r["cuisine_slug"] == cuisine]
     if price and price != "all":
         rows = [r for r in rows if r["price"] == price]
+        all_rows = [r for r in all_rows if r["price"] == price]
     q = (restaurant_q or "").strip().lower()
-    if q:
-        rows = [r for r in rows if q in r["search"]]
-    return rows
+    if not q:
+        return rows
+
+    name_hits = [r for r in all_rows if _search_rank(r, q) <= 3]
+    name_hits.sort(key=lambda r: (_search_rank(r, q), r["name"]))
+    seen = {r["slug"] for r in name_hits}
+    others = [r for r in rows if r["slug"] not in seen]
+    others.sort(key=lambda r: (_search_rank(r, q), r["name"]))
+    return name_hits + others
