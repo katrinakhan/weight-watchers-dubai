@@ -260,6 +260,15 @@ MAIN_VEG = {
     "sri-lankan": O("Dhal, mallung and vegetable curry", 320, "Veg main: dhal, greens, one veg curry. A few spoons of rice.", "veg"),
 }
 
+MAIN_NONVEG = {
+    "arabic": O("Shish tawook or mixed grill", 380, "Non-veg main: chicken tawook or mixed grill. Leave the fries.", "non-veg"),
+    "chinese": O("Steamed chicken or fish", 340, "Non-veg main: steamed chicken or fish. No fried rice.", "non-veg"),
+    "japanese": O("Grilled fish or chicken robata", 340, "Non-veg main: grilled fish or chicken. Sauce on the side.", "non-veg"),
+    "indian": O("Chicken tikka or tandoor fish", 320, "Non-veg main: tandoor chicken or fish. One roti for the table if needed.", "non-veg"),
+    "filipino": O("Grilled chicken or fish", 340, "Non-veg main: inihaw chicken or fish. Skip extra rice.", "non-veg"),
+    "sri-lankan": O("Chicken curry or fish curry", 360, "Non-veg main: chicken or fish curry. A few spoons of rice.", "non-veg"),
+}
+
 
 def _looks_nonveg(name: str) -> bool:
     n = (name or "").lower()
@@ -287,14 +296,13 @@ def _as_option(plate, diet: str):
 
 
 def _ensure_course_options(cuisine: str, plates):
-    veg_kitchen = all(not _looks_nonveg(p["name"]) for p in plates)
     for plate in plates:
         options = plate.get("options") or [_as_option(plate, "veg" if not _looks_nonveg(plate["name"]) else "non-veg")]
         plate["options"] = options
         if len(options) > 1:
             continue
         label = plate["label"].lower()
-        is_main = label.startswith("main") or label == "dim sum"
+        is_main = (label.startswith("main") or label == "dim sum") and "soup / main" not in label
         is_soup = (not is_main) and (
             "soup" in label
             or "shorba" in plate["name"].lower()
@@ -304,16 +312,19 @@ def _ensure_course_options(cuisine: str, plates):
             or "harees" in plate["name"].lower()
         )
         if is_soup:
-            if veg_kitchen:
-                continue
             alt = SOUP_NONVEG[cuisine] if not _looks_nonveg(plate["name"]) else SOUP_VEG[cuisine]
             if alt["name"].lower() != plate["name"].lower():
                 options.append(alt)
-        if is_main and _looks_nonveg(plate["name"]):
-            alt = MAIN_VEG[cuisine]
+        elif is_main:
+            alt = MAIN_VEG[cuisine] if _looks_nonveg(plate["name"]) else MAIN_NONVEG[cuisine]
             if alt["name"].lower() != plate["name"].lower():
                 options.append(alt)
         plate["options"] = options
+    if plates and not any(len(p.get("options") or []) > 1 for p in plates):
+        last = plates[-1]
+        alt = MAIN_VEG[cuisine] if _looks_nonveg(last["name"]) else MAIN_NONVEG[cuisine]
+        if alt["name"].lower() != last["name"].lower():
+            last["options"].append(alt)
     return plates
 
 

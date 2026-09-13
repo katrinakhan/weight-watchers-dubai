@@ -336,16 +336,19 @@ main {
     line-height: 1.25;
 }
 
-.dish-pick {
+.dish-options { display: none; }
     width: 100%;
     margin: 0.2rem 0 0.35rem;
     font: inherit;
-    font-size: 0.9rem;
-    padding: 0.45rem 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    text-align: left;
+    padding: 0.55rem 0.7rem;
     border-radius: 10px;
     border: 0;
     background: #fff;
     color: #1e1208;
+    cursor: pointer;
 }
 
 .course-copy p {

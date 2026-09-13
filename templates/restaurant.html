@@ -35,23 +35,10 @@
             <div class="course-copy">
                 <p class="course-label">{{ d.label }}{% if d.options|length > 1 %} · pick one{% endif %} · ~<span data-show="kcal">{{ d.kcal }}</span> kcal</p>
                 {% if d.options|length > 1 %}
-                <label class="sr-only" for="dish-{{ loop.index }}">Choose {{ d.label }}</label>
-                <select class="dish-pick" id="dish-{{ loop.index }}">
-                    {% for o in d.options %}
-                    <option
-                        value="{{ loop.index0 }}"
-                        data-name="{{ o.name }}"
-                        data-kcal="{{ o.kcal }}"
-                        data-protein="{{ o.protein }}"
-                        data-carbs="{{ o.carbs }}"
-                        data-fat="{{ o.fat }}"
-                        data-fiber="{{ o.fiber }}"
-                        data-note="{{ o.note }}"
-                        data-diet="{{ o.diet }}"
-                        {% if loop.first %}selected{% endif %}
-                    >{{ o.name }} ({{ o.diet }}) · ~{{ o.kcal }} kcal · P {{ o.protein }}g · C {{ o.carbs }}g · F {{ o.fat }}g · Fi {{ o.fiber }}g</option>
-                    {% endfor %}
-                </select>
+                <script type="application/json" class="dish-options">{{ d.options|tojson }}</script>
+                <button type="button" class="dish-pick" data-index="0">
+                    {% if d.options[0].diet == 'veg' %}Click for non-veg option{% else %}Click for vegetarian option{% endif %}
+                </button>
                 <h2 class="dish-heading" data-show="name">{{ d.name }}</h2>
                 {% else %}
                 <h2 data-show="name">{{ d.name }}</h2>
@@ -122,47 +109,50 @@
 <script>
 (function () {
     var drink = {{ r.drink_name|tojson }};
-    function applySelect(select) {
-        var opt = select.options[select.selectedIndex];
-        if (!opt) return;
-        var card = select.closest("[data-course]");
-        if (!card) return;
+    function cta(diet) {
+        return diet === "veg" ? "Click for non-veg option" : "Click for vegetarian option";
+    }
+    function applyOption(card, opt) {
         var set = function (key, val) {
             var el = card.querySelector('[data-show="' + key + '"]');
             if (el) el.textContent = val;
         };
-        set("kcal", opt.getAttribute("data-kcal"));
-        set("protein", opt.getAttribute("data-protein"));
-        set("carbs", opt.getAttribute("data-carbs"));
-        set("fat", opt.getAttribute("data-fat"));
-        set("fiber", opt.getAttribute("data-fiber"));
-        set("note", opt.getAttribute("data-note"));
-        set("name", opt.getAttribute("data-name"));
+        set("kcal", opt.kcal);
+        set("protein", opt.protein);
+        set("carbs", opt.carbs);
+        set("fat", opt.fat);
+        set("fiber", opt.fiber);
+        set("note", opt.note);
+        set("name", opt.name);
+    }
+    function currentOption(card) {
+        var btn = card.querySelector(".dish-pick");
+        var hold = card.querySelector(".dish-options");
+        if (!btn || !hold) {
+            return {
+                name: (card.querySelector('[data-show="name"]') || {}).textContent || "",
+                kcal: Number((card.querySelector('[data-show="kcal"]') || {}).textContent || 0),
+                protein: Number((card.querySelector('[data-show="protein"]') || {}).textContent || 0),
+                carbs: Number((card.querySelector('[data-show="carbs"]') || {}).textContent || 0),
+                fat: Number((card.querySelector('[data-show="fat"]') || {}).textContent || 0),
+                fiber: Number((card.querySelector('[data-show="fiber"]') || {}).textContent || 0)
+            };
+        }
+        var options = JSON.parse(hold.textContent);
+        var index = Number(btn.getAttribute("data-index") || 0);
+        return options[index] || options[0];
     }
     function retotal() {
         var kcal = 0, protein = 0, carbs = 0, fat = 0, fiber = 0;
         var names = [];
         document.querySelectorAll("[data-course]").forEach(function (card) {
-            var select = card.querySelector(".dish-pick");
-            var k, p, c, f, fi, name;
-            if (select) {
-                var opt = select.options[select.selectedIndex];
-                k = Number(opt.getAttribute("data-kcal") || 0);
-                p = Number(opt.getAttribute("data-protein") || 0);
-                c = Number(opt.getAttribute("data-carbs") || 0);
-                f = Number(opt.getAttribute("data-fat") || 0);
-                fi = Number(opt.getAttribute("data-fiber") || 0);
-                name = opt.getAttribute("data-name") || "";
-            } else {
-                k = Number((card.querySelector('[data-show="kcal"]') || {}).textContent || 0);
-                p = Number((card.querySelector('[data-show="protein"]') || {}).textContent || 0);
-                c = Number((card.querySelector('[data-show="carbs"]') || {}).textContent || 0);
-                f = Number((card.querySelector('[data-show="fat"]') || {}).textContent || 0);
-                fi = Number((card.querySelector('[data-show="fiber"]') || {}).textContent || 0);
-                name = (card.querySelector('[data-show="name"]') || {}).textContent || "";
-            }
-            kcal += k; protein += p; carbs += c; fat += f; fiber += fi;
-            if (name) names.push(name + " (~" + k + " kcal)");
+            var opt = currentOption(card);
+            kcal += Number(opt.kcal || 0);
+            protein += Number(opt.protein || 0);
+            carbs += Number(opt.carbs || 0);
+            fat += Number(opt.fat || 0);
+            fiber += Number(opt.fiber || 0);
+            if (opt.name) names.push(opt.name + " (~" + opt.kcal + " kcal)");
         });
         document.querySelectorAll("[data-meal-kcal]").forEach(function (el) { el.textContent = kcal; });
         document.querySelectorAll("[data-meal-protein]").forEach(function (el) { el.textContent = protein; });
@@ -172,9 +162,15 @@
         var how = document.querySelector("[data-how-plates]");
         if (how) how.textContent = names.join(" + ") + (drink ? " + " + drink : "");
     }
-    document.querySelectorAll(".dish-pick").forEach(function (select) {
-        select.addEventListener("change", function () {
-            applySelect(select);
+    document.querySelectorAll(".dish-pick").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            var card = btn.closest("[data-course]");
+            var hold = card.querySelector(".dish-options");
+            var options = JSON.parse(hold.textContent);
+            var index = (Number(btn.getAttribute("data-index") || 0) + 1) % options.length;
+            btn.setAttribute("data-index", String(index));
+            applyOption(card, options[index]);
+            btn.textContent = cta(options[index].diet);
             retotal();
         });
     });
