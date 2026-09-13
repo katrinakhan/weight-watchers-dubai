@@ -3,7 +3,7 @@
 {% block content %}
 <article class="auth">
     <h1>Log in</h1>
-    <p class="lede">You can browse the restaurants without logging in. Use <a href="{{ url_for('index') }}">the home page</a> or How this works. Log in here only if you already have an account (admin or after you subscribe).</p>
+    <p class="lede">Use the email and password you saved on Render as <strong>ADMIN_EMAIL</strong> and <strong>ADMIN_PASSWORD</strong>. That is not your Gmail password. You can still browse restaurants without logging in from <a href="{{ url_for('index') }}">the home page</a>.</p>
     {% if error %}
     <p class="auth-error">{{ error }}</p>
     {% endif %}

@@ -68,22 +68,27 @@ def _ensure_paid_until_column():
             pass
 
 
+def _admin_credentials() -> tuple[str, str]:
+    if not os.environ.get("RENDER"):
+        os.environ.setdefault("ADMIN_EMAIL", "nageenfathima5000@gmail.com")
+        os.environ.setdefault("ADMIN_PASSWORD", "WhatToOrder1")
+    email = (os.environ.get("ADMIN_EMAIL") or "").strip().lower().strip('"').strip("'")
+    password = (os.environ.get("ADMIN_PASSWORD") or "").strip().strip('"').strip("'")
+    return email, password
+
+
 def _ensure_admin_user():
-    email = (os.environ.get("ADMIN_EMAIL") or "").strip().lower()
-    password = os.environ.get("ADMIN_PASSWORD") or ""
-    if not email or "@" not in email:
+    email, password = _admin_credentials()
+    if not email or "@" not in email or len(password) < 8:
         return
     user = User.query.filter_by(email=email).first()
     if user is None:
-        if len(password) < 8:
-            return
         user = User(email=email, is_admin=True)
         user.set_password(password)
         db.session.add(user)
     else:
         user.is_admin = True
-        if len(password) >= 8:
-            user.set_password(password)
+        user.set_password(password)
     db.session.commit()
 
 
@@ -133,10 +138,26 @@ def login():
     error = None
     if request.method == "POST":
         email = (request.form.get("email") or "").strip().lower()
-        password = request.form.get("password") or ""
+        password = (request.form.get("password") or "").strip()
+        admin_email, admin_password = _admin_credentials()
+        if (
+            admin_email
+            and email == admin_email
+            and len(admin_password) >= 8
+            and password == admin_password
+        ):
+            user = User.query.filter_by(email=email).first()
+            if user is None:
+                user = User(email=email, is_admin=True)
+                db.session.add(user)
+            user.is_admin = True
+            user.set_password(password)
+            db.session.commit()
+            login_user(user)
+            return redirect(url_for("index"))
         user = User.query.filter_by(email=email).first()
         if user is None or not user.check_password(password):
-            error = "That email or password is not right."
+            error = "That email or password is not right. Use the ADMIN_EMAIL and ADMIN_PASSWORD from Render Environment — not your Gmail password."
         else:
             login_user(user)
             nxt = request.args.get("next") or url_for("index")
