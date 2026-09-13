@@ -33,7 +33,7 @@
         <li class="course" data-course>
             <img src="{{ url_for('static', filename='img/' + d.img) }}" alt="{{ d.name }}">
             <div class="course-copy">
-                <p class="course-label">{{ d.label }}{% if d.options|length > 1 %} · pick one{% endif %} · ~<span data-kcal>{{ d.kcal }}</span> kcal</p>
+                <p class="course-label">{{ d.label }}{% if d.options|length > 1 %} · pick one{% endif %} · ~<span data-show="kcal">{{ d.kcal }}</span> kcal</p>
                 {% if d.options|length > 1 %}
                 <label class="sr-only" for="dish-{{ loop.index }}">Choose {{ d.label }}</label>
                 <select class="dish-pick" id="dish-{{ loop.index }}">
@@ -49,17 +49,15 @@
                         data-note="{{ o.note }}"
                         data-diet="{{ o.diet }}"
                         {% if loop.first %}selected{% endif %}
-                    >{{ o.name }}{% if o.diet %} ({{ o.diet }}){% endif %} / ~{{ o.kcal }} kcal</option>
+                    >{{ o.name }} ({{ o.diet }}) · ~{{ o.kcal }} kcal · P {{ o.protein }}g · C {{ o.carbs }}g · F {{ o.fat }}g · Fi {{ o.fiber }}g</option>
                     {% endfor %}
                 </select>
+                <h2 class="dish-heading" data-show="name">{{ d.name }}</h2>
                 {% else %}
-                <h2 data-name>{{ d.name }}</h2>
+                <h2 data-show="name">{{ d.name }}</h2>
                 {% endif %}
-                {% if d.options|length > 1 %}
-                <h2 class="dish-heading" data-name>{{ d.name }}</h2>
-                {% endif %}
-                <p class="macros">Protein ~<span data-protein>{{ d.protein }}</span> g · carbs ~<span data-carbs>{{ d.carbs }}</span> g · fat ~<span data-fat>{{ d.fat }}</span> g · fiber ~<span data-fiber>{{ d.fiber }}</span> g</p>
-                <p data-note>{{ d.note }}</p>
+                <p class="macros">Protein ~<span data-show="protein">{{ d.protein }}</span> g · carbs ~<span data-show="carbs">{{ d.carbs }}</span> g · fat ~<span data-show="fat">{{ d.fat }}</span> g · fiber ~<span data-show="fiber">{{ d.fiber }}</span> g</p>
+                <p data-show="note">{{ d.note }}</p>
             </div>
         </li>
         {% endfor %}
@@ -130,7 +128,7 @@
         var card = select.closest("[data-course]");
         if (!card) return;
         var set = function (key, val) {
-            var el = card.querySelector("[data-" + key + "]");
+            var el = card.querySelector('[data-show="' + key + '"]');
             if (el) el.textContent = val;
         };
         set("kcal", opt.getAttribute("data-kcal"));
@@ -156,12 +154,12 @@
                 fi = Number(opt.getAttribute("data-fiber") || 0);
                 name = opt.getAttribute("data-name") || "";
             } else {
-                k = Number((card.querySelector("[data-kcal]") || {}).textContent || 0);
-                p = Number((card.querySelector("[data-protein]") || {}).textContent || 0);
-                c = Number((card.querySelector("[data-carbs]") || {}).textContent || 0);
-                f = Number((card.querySelector("[data-fat]") || {}).textContent || 0);
-                fi = Number((card.querySelector("[data-fiber]") || {}).textContent || 0);
-                name = (card.querySelector("[data-name]") || {}).textContent || "";
+                k = Number((card.querySelector('[data-show="kcal"]') || {}).textContent || 0);
+                p = Number((card.querySelector('[data-show="protein"]') || {}).textContent || 0);
+                c = Number((card.querySelector('[data-show="carbs"]') || {}).textContent || 0);
+                f = Number((card.querySelector('[data-show="fat"]') || {}).textContent || 0);
+                fi = Number((card.querySelector('[data-show="fiber"]') || {}).textContent || 0);
+                name = (card.querySelector('[data-show="name"]') || {}).textContent || "";
             }
             kcal += k; protein += p; carbs += c; fat += f; fiber += fi;
             if (name) names.push(name + " (~" + k + " kcal)");

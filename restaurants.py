@@ -138,16 +138,23 @@ def _macros(name: str, kcal: int):
         p, c, f, fi = 8, 16, 10, 6
     elif "caesar" in n:
         p, c, f, fi = 12, 10, 14, 2
-    elif "lentil" in n or "shorba" in n or "dhal" in n or "parippu" in n:
-        p, c, f, fi = 9, 22, 3, 8
     elif "rasam" in n:
         p, c, f, fi = 2, 12, 2, 2
-    elif "miso" in n and "cod" not in n and "soup" in n:
+    elif "chicken soup" in n or "chicken shorba" in n or "steamed chicken soup" in n or "clear soup with fish" in n:
+        p, c, f, fi = 16, 6, 5, 1
+    elif "lentil" in n or "dal or tomato" in n or "dhal soup" in n or ("shorba" in n and "chicken" not in n) or ("dhal" in n and "mallung" not in n) or "parippu" in n:
+        p, c, f, fi = 9, 22, 3, 8
+    elif "vegetable / winter" in n or "winter melon" in n or "vegetable miso" in n or "tofu miso" in n:
+        p, c, f, fi = 4, 8, 2, 3
+    elif "miso" in n and "cod" not in n:
         p, c, f, fi = 3, 4, 1, 1
     elif "hot & sour" in n or "hot and sour" in n:
-        p, c, f, fi = 6, 10, 3, 2
-    elif "chicken soup" in n or "steamed chicken soup" in n:
-        p, c, f, fi = 14, 6, 5, 1
+        if "chicken" in n:
+            p, c, f, fi = 10, 8, 4, 1
+        else:
+            p, c, f, fi = 4, 10, 2, 2
+    elif "vegetable sinigang" in n:
+        p, c, f, fi = 6, 16, 4, 5
     elif "sinigang" in n:
         p, c, f, fi = 22, 12, 10, 3
     elif "harees" in n:
@@ -162,16 +169,24 @@ def _macros(name: str, kcal: int):
         p, c, f, fi = 2, 6, 7, 3
     elif "dosa" in n or "idli" in n:
         p, c, f, fi = 8, 48, 6, 4
+    elif "vegetable dumpling" in n or "tofu with greens" in n:
+        p, c, f, fi = 10, 26, 6, 4
     elif "xiao long bao" in n or "dumpling" in n or "siew mai" in n or "bao" in n:
         p, c, f, fi = 14, 28, 10, 2
     elif "lettuce wrap" in n:
         p, c, f, fi = 18, 18, 12, 3
     elif "edamame" in n:
         p, c, f, fi = 11, 9, 5, 5
+    elif "paneer" in n or "halloumi" in n:
+        p, c, f, fi = 20, 6, 20, 1
+    elif "tofu" in n:
+        p, c, f, fi = 18, 8, 12, 3
+    elif "vegetable mixed grill" in n or "grilled vegetables" in n or "eggplant" in n or "vegetable robata" in n:
+        p, c, f, fi = 8, 16, 12, 6
+    elif "mallung and vegetable" in n or "vegetable curry" in n:
+        p, c, f, fi = 12, 28, 10, 8
     elif any(w in n for w in ("tawook", "tikka", "tandoor", "tandoori", "murgh", "robata chicken")):
         p, c, f, fi = 38, 6, 14, 1
-    elif "paneer" in n:
-        p, c, f, fi = 18, 8, 18, 1
     elif "mixed grill" in n or "kebab" in n or "tsukune" in n or "inihaw" in n:
         p, c, f, fi = 36, 4, 22, 0
     elif any(w in n for w in ("sea bream", "sea bass", "cod", "salmon", "fish", "bangus", "grilled chicken")):
