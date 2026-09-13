@@ -37,9 +37,10 @@
                 {% if d.options|length > 1 %}
                 <script type="application/json" class="dish-options">{{ d.options|tojson }}</script>
                 <button type="button" class="dish-pick" data-index="0">
-                    {% if d.options[0].diet == 'veg' %}Click for non-veg option{% else %}Click for vegetarian option{% endif %}
+                    {% if d.options[0].diet == 'veg' %}Click for non-vegetarian option{% else %}Click for vegetarian option{% endif %}
                 </button>
                 <h2 class="dish-heading" data-show="name">{{ d.name }}</h2>
+                <p class="diet-flag" data-show="diet-flag">{% if d.options[0].diet == 'veg' %}Vegetarian{% else %}Non-vegetarian{% endif %}</p>
                 {% else %}
                 <h2 data-show="name">{{ d.name }}</h2>
                 {% endif %}
@@ -110,7 +111,7 @@
 (function () {
     var drink = {{ r.drink_name|tojson }};
     function cta(diet) {
-        return diet === "veg" ? "Click for non-veg option" : "Click for vegetarian option";
+        return diet === "veg" ? "Click for non-vegetarian option" : "Click for vegetarian option";
     }
     function applyOption(card, opt) {
         var set = function (key, val) {
@@ -124,6 +125,7 @@
         set("fiber", opt.fiber);
         set("note", opt.note);
         set("name", opt.name);
+        set("diet-flag", opt.diet === "veg" ? "Vegetarian" : "Non-vegetarian");
     }
     function currentOption(card) {
         var btn = card.querySelector(".dish-pick");
@@ -168,9 +170,10 @@
             var hold = card.querySelector(".dish-options");
             var options = JSON.parse(hold.textContent);
             var index = (Number(btn.getAttribute("data-index") || 0) + 1) % options.length;
+            var shown = options[index];
             btn.setAttribute("data-index", String(index));
-            applyOption(card, options[index]);
-            btn.textContent = cta(options[index].diet);
+            applyOption(card, shown);
+            btn.textContent = cta(shown.diet);
             retotal();
         });
     });

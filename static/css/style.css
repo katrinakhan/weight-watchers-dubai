@@ -337,6 +337,8 @@ main {
 }
 
 .dish-options { display: none; }
+
+.dish-pick {
     width: 100%;
     margin: 0.2rem 0 0.35rem;
     font: inherit;
@@ -349,6 +351,14 @@ main {
     background: #fff;
     color: #1e1208;
     cursor: pointer;
+}
+
+.diet-flag {
+    margin: 0 0 0.25rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 .course-copy p {
