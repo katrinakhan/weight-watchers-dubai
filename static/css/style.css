@@ -336,6 +336,18 @@ main {
     line-height: 1.25;
 }
 
+.dish-pick {
+    width: 100%;
+    margin: 0.2rem 0 0.35rem;
+    font: inherit;
+    font-size: 0.9rem;
+    padding: 0.45rem 0.5rem;
+    border-radius: 10px;
+    border: 0;
+    background: #fff;
+    color: #1e1208;
+}
+
 .course-copy p {
     margin: 0.1rem 0 0;
     color: #fff;

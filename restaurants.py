@@ -204,18 +204,134 @@ def _macros(name: str, kcal: int):
     return {"protein": p, "carbs": c, "fat": f, "fiber": fi}
 
 
-def C(label, name, kcal, note, img, protein=None, carbs=None, fat=None, fiber=None):
+def O(name, kcal, note, diet):
     m = _macros(name, kcal)
+    return {
+        "name": name,
+        "kcal": kcal,
+        "note": note,
+        "diet": diet,
+        "protein": m["protein"],
+        "carbs": m["carbs"],
+        "fat": m["fat"],
+        "fiber": m["fiber"],
+    }
+
+
+SOUP_NONVEG = {
+    "arabic": O("Chicken soup", 160, "Non-veg bowl if they list chicken or lamb soup. Same idea as lentil: cup not a vat.", "non-veg"),
+    "chinese": O("Hot & sour soup with chicken", 110, "Non-veg soup if they print chicken or wonton in broth.", "non-veg"),
+    "japanese": O("Clear soup with fish or chicken", 70, "Non-veg suimono or chicken soup if listed — still a cup.", "non-veg"),
+    "indian": O("Chicken shorba", 150, "Non-veg soup if they list chicken or mutton shorba.", "non-veg"),
+    "filipino": O("Sinigang na baboy or bangus", 260, "Non-veg sinigang — pork or milkfish — vegetables in, extra meat out if you can.", "non-veg"),
+    "sri-lankan": O("Chicken soup or fish soup", 150, "Non-veg broth if they list it. Small bowl.", "non-veg"),
+}
+
+SOUP_VEG = {
+    "arabic": O("Lentil soup", 150, "Veg bowl: cumin lentil, no meat stock if they can do it.", "veg"),
+    "chinese": O("Vegetable / winter melon soup", 80, "Veg soup if they list greens or melon in broth, no chicken.", "veg"),
+    "japanese": O("Vegetable miso or tofu miso", 45, "Ask for veg or tofu miso if the house dashi is fish.", "veg"),
+    "indian": O("Dal or tomato shorba", 130, "Veg soup — lentil or tomato. No cream if you can.", "veg"),
+    "filipino": O("Vegetable sinigang", 120, "Veg tamarind soup with greens, no pork or fish.", "veg"),
+    "sri-lankan": O("Rasam or plain dhal soup", 120, "Veg pepper-tamarind or thin dhal. Small bowl.", "veg"),
+}
+
+MAIN_VEG = {
+    "arabic": O("Grilled halloumi or vegetable mixed grill", 320, "Veg main: halloumi or mixed grill vegetables. Leave the pita mountain.", "veg"),
+    "chinese": O("Steamed vegetable dumplings or tofu with greens", 240, "Veg main: steamed veg dumplings or tofu and greens. No fried rice.", "veg"),
+    "japanese": O("Vegetable robata or tofu steak", 280, "Veg main: grilled vegetables or tofu. Sauce on the side.", "veg"),
+    "indian": O("Paneer tikka or tandoor vegetables", 280, "Veg main: paneer tikka or mixed tandoor veg. One roti for the table if needed.", "veg"),
+    "filipino": O("Grilled vegetables or eggplant inihaw", 220, "Veg main: inihaw vegetables, not fried. Skip extra rice.", "veg"),
+    "sri-lankan": O("Dhal, mallung and vegetable curry", 320, "Veg main: dhal, greens, one veg curry. A few spoons of rice.", "veg"),
+}
+
+
+def _looks_nonveg(name: str) -> bool:
+    n = (name or "").lower()
+    keys = (
+        "chicken", "tawook", "tawouk", "lamb", "beef", "fish", "prawn", "shrimp",
+        "crab", "duck", "pork", "bangus", "salmon", "hamachi", "sashimi", "cod",
+        "wagyu", "murgh", "mutton", "sea bream", "sea bass", "oxtail", "kare-kare",
+        "tsukune", "xiao long bao", "black pepper", "inihaw", "robata sea",
+        "mixed grill", "shoyu ramen", "lettuce wraps", "harees", "kebab", "kebabs", "tikka",
+    )
+    return any(k in n for k in keys)
+
+
+def _as_option(plate, diet: str):
+    return {
+        "name": plate["name"],
+        "kcal": plate["kcal"],
+        "note": plate["note"],
+        "diet": diet,
+        "protein": plate["protein"],
+        "carbs": plate["carbs"],
+        "fat": plate["fat"],
+        "fiber": plate["fiber"],
+    }
+
+
+def _ensure_course_options(cuisine: str, plates):
+    veg_kitchen = all(not _looks_nonveg(p["name"]) for p in plates)
+    for plate in plates:
+        options = plate.get("options") or [_as_option(plate, "veg" if not _looks_nonveg(plate["name"]) else "non-veg")]
+        plate["options"] = options
+        if len(options) > 1:
+            continue
+        label = plate["label"].lower()
+        is_main = label.startswith("main") or label == "dim sum"
+        is_soup = (not is_main) and (
+            "soup" in label
+            or "shorba" in plate["name"].lower()
+            or "sinigang" in plate["name"].lower()
+            or "rasam" in plate["name"].lower()
+            or "miso" in plate["name"].lower()
+            or "harees" in plate["name"].lower()
+        )
+        if is_soup:
+            if veg_kitchen:
+                continue
+            alt = SOUP_NONVEG[cuisine] if not _looks_nonveg(plate["name"]) else SOUP_VEG[cuisine]
+            if alt["name"].lower() != plate["name"].lower():
+                options.append(alt)
+        if is_main and _looks_nonveg(plate["name"]):
+            alt = MAIN_VEG[cuisine]
+            if alt["name"].lower() != plate["name"].lower():
+                options.append(alt)
+        plate["options"] = options
+    return plates
+
+
+def C(label, name, kcal, note, img, protein=None, carbs=None, fat=None, fiber=None, also=None):
+    m = _macros(name, kcal)
+    protein = protein if protein is not None else m["protein"]
+    carbs = carbs if carbs is not None else m["carbs"]
+    fat = fat if fat is not None else m["fat"]
+    fiber = fiber if fiber is not None else m["fiber"]
+    first = {
+        "name": name,
+        "kcal": kcal,
+        "note": note,
+        "diet": "non-veg" if _looks_nonveg(name) else "veg",
+        "protein": protein,
+        "carbs": carbs,
+        "fat": fat,
+        "fiber": fiber,
+    }
+    options = [first]
+    if also:
+        options.extend(also)
     return {
         "label": label,
         "name": name,
         "kcal": kcal,
         "note": note,
         "img": img,
-        "protein": protein if protein is not None else m["protein"],
-        "carbs": carbs if carbs is not None else m["carbs"],
-        "fat": fat if fat is not None else m["fat"],
-        "fiber": fiber if fiber is not None else m["fiber"],
+        "protein": protein,
+        "carbs": carbs,
+        "fat": fat,
+        "fiber": fiber,
+        "options": options,
     }
 
 
@@ -244,6 +360,7 @@ def R(**kwargs):
     kwargs.setdefault("skip", SKIP[cuisine])
     courses = kwargs.pop("courses", None)
     if courses:
+        courses = _ensure_course_options(cuisine, courses)
         kwargs["meal"] = {
             "plates": courses,
             "kcal_total": sum(p["kcal"] for p in courses),

@@ -18,25 +18,48 @@
         {% endif %}
         <p class="why">{{ r.why }}</p>
         {% if r.meal %}
-        <p class="kcal-banner">These plates, about <strong>{{ r.meal.kcal_total }} kcal</strong> together
-            · protein ~{{ r.meal.protein_total }} g
-            · carbs ~{{ r.meal.carbs_total }} g
-            · fat ~{{ r.meal.fat_total }} g
-            · fiber ~{{ r.meal.fiber_total }} g
-            <span>(estimates · this restaurant’s named dishes)</span></p>
+        <p class="kcal-banner">These plates, about <strong><span data-meal-kcal>{{ r.meal.kcal_total }}</span> kcal</strong> together
+            · protein ~<span data-meal-protein>{{ r.meal.protein_total }}</span> g
+            · carbs ~<span data-meal-carbs>{{ r.meal.carbs_total }}</span> g
+            · fat ~<span data-meal-fat>{{ r.meal.fat_total }}</span> g
+            · fiber ~<span data-meal-fiber>{{ r.meal.fiber_total }}</span> g
+            <span>(estimates · this restaurant’s named dishes · soup and main have a second choice)</span></p>
         {% endif %}
     </header>
 
     {% if r.meal %}
     <ol class="courses">
         {% for d in r.meal.plates %}
-        <li class="course">
+        <li class="course" data-course>
             <img src="{{ url_for('static', filename='img/' + d.img) }}" alt="{{ d.name }}">
             <div class="course-copy">
-                <p class="course-label">{{ d.label }} · ~{{ d.kcal }} kcal</p>
-                <h2>{{ d.name }}</h2>
-                <p class="macros">Protein ~{{ d.protein }} g · carbs ~{{ d.carbs }} g · fat ~{{ d.fat }} g · fiber ~{{ d.fiber }} g</p>
-                <p>{{ d.note }}</p>
+                <p class="course-label">{{ d.label }}{% if d.options|length > 1 %} · pick one{% endif %} · ~<span data-kcal>{{ d.kcal }}</span> kcal</p>
+                {% if d.options|length > 1 %}
+                <label class="sr-only" for="dish-{{ loop.index }}">Choose {{ d.label }}</label>
+                <select class="dish-pick" id="dish-{{ loop.index }}">
+                    {% for o in d.options %}
+                    <option
+                        value="{{ loop.index0 }}"
+                        data-name="{{ o.name }}"
+                        data-kcal="{{ o.kcal }}"
+                        data-protein="{{ o.protein }}"
+                        data-carbs="{{ o.carbs }}"
+                        data-fat="{{ o.fat }}"
+                        data-fiber="{{ o.fiber }}"
+                        data-note="{{ o.note }}"
+                        data-diet="{{ o.diet }}"
+                        {% if loop.first %}selected{% endif %}
+                    >{{ o.name }}{% if o.diet %} ({{ o.diet }}){% endif %} / ~{{ o.kcal }} kcal</option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <h2 data-name>{{ d.name }}</h2>
+                {% endif %}
+                {% if d.options|length > 1 %}
+                <h2 class="dish-heading" data-name>{{ d.name }}</h2>
+                {% endif %}
+                <p class="macros">Protein ~<span data-protein>{{ d.protein }}</span> g · carbs ~<span data-carbs>{{ d.carbs }}</span> g · fat ~<span data-fat>{{ d.fat }}</span> g · fiber ~<span data-fiber>{{ d.fiber }}</span> g</p>
+                <p data-note>{{ d.note }}</p>
             </div>
         </li>
         {% endfor %}
@@ -84,17 +107,80 @@
         <h2>How to play it tonight</h2>
         <p>{{ r.how }}</p>
         {% if r.meal %}
-        <p class="how-plates">
+        <p class="how-plates" data-how-plates>
             {% for d in r.meal.plates %}{{ d.name }} (~{{ d.kcal }} kcal){% if not loop.last %} + {% endif %}{% endfor %}
             + {{ r.drink_name }}
         </p>
-        <p class="how-total">Complete total: about <strong>{{ r.meal.kcal_total }} kcal</strong>
-            · protein ~{{ r.meal.protein_total }} g
-            · carbs ~{{ r.meal.carbs_total }} g
-            · fat ~{{ r.meal.fat_total }} g
-            · fiber ~{{ r.meal.fiber_total }} g
+        <p class="how-total">Complete total: about <strong><span data-meal-kcal>{{ r.meal.kcal_total }}</span> kcal</strong>
+            · protein ~<span data-meal-protein>{{ r.meal.protein_total }}</span> g
+            · carbs ~<span data-meal-carbs>{{ r.meal.carbs_total }}</span> g
+            · fat ~<span data-meal-fat>{{ r.meal.fat_total }}</span> g
+            · fiber ~<span data-meal-fiber>{{ r.meal.fiber_total }}</span> g
             <span>(estimates)</span></p>
         {% endif %}
     </section>
 </article>
+{% if r.meal %}
+<script>
+(function () {
+    var drink = {{ r.drink_name|tojson }};
+    function applySelect(select) {
+        var opt = select.options[select.selectedIndex];
+        if (!opt) return;
+        var card = select.closest("[data-course]");
+        if (!card) return;
+        var set = function (key, val) {
+            var el = card.querySelector("[data-" + key + "]");
+            if (el) el.textContent = val;
+        };
+        set("kcal", opt.getAttribute("data-kcal"));
+        set("protein", opt.getAttribute("data-protein"));
+        set("carbs", opt.getAttribute("data-carbs"));
+        set("fat", opt.getAttribute("data-fat"));
+        set("fiber", opt.getAttribute("data-fiber"));
+        set("note", opt.getAttribute("data-note"));
+        set("name", opt.getAttribute("data-name"));
+    }
+    function retotal() {
+        var kcal = 0, protein = 0, carbs = 0, fat = 0, fiber = 0;
+        var names = [];
+        document.querySelectorAll("[data-course]").forEach(function (card) {
+            var select = card.querySelector(".dish-pick");
+            var k, p, c, f, fi, name;
+            if (select) {
+                var opt = select.options[select.selectedIndex];
+                k = Number(opt.getAttribute("data-kcal") || 0);
+                p = Number(opt.getAttribute("data-protein") || 0);
+                c = Number(opt.getAttribute("data-carbs") || 0);
+                f = Number(opt.getAttribute("data-fat") || 0);
+                fi = Number(opt.getAttribute("data-fiber") || 0);
+                name = opt.getAttribute("data-name") || "";
+            } else {
+                k = Number((card.querySelector("[data-kcal]") || {}).textContent || 0);
+                p = Number((card.querySelector("[data-protein]") || {}).textContent || 0);
+                c = Number((card.querySelector("[data-carbs]") || {}).textContent || 0);
+                f = Number((card.querySelector("[data-fat]") || {}).textContent || 0);
+                fi = Number((card.querySelector("[data-fiber]") || {}).textContent || 0);
+                name = (card.querySelector("[data-name]") || {}).textContent || "";
+            }
+            kcal += k; protein += p; carbs += c; fat += f; fiber += fi;
+            if (name) names.push(name + " (~" + k + " kcal)");
+        });
+        document.querySelectorAll("[data-meal-kcal]").forEach(function (el) { el.textContent = kcal; });
+        document.querySelectorAll("[data-meal-protein]").forEach(function (el) { el.textContent = protein; });
+        document.querySelectorAll("[data-meal-carbs]").forEach(function (el) { el.textContent = carbs; });
+        document.querySelectorAll("[data-meal-fat]").forEach(function (el) { el.textContent = fat; });
+        document.querySelectorAll("[data-meal-fiber]").forEach(function (el) { el.textContent = fiber; });
+        var how = document.querySelector("[data-how-plates]");
+        if (how) how.textContent = names.join(" + ") + (drink ? " + " + drink : "");
+    }
+    document.querySelectorAll(".dish-pick").forEach(function (select) {
+        select.addEventListener("change", function () {
+            applySelect(select);
+            retotal();
+        });
+    });
+})();
+</script>
+{% endif %}
 {% endblock %}
